@@ -6,17 +6,26 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#crypter-g)" />
-  <g
-    transform="translate(10.67 10.67) scale(1.7778)"
-    fill="none"
-    stroke="#040406"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <path d="M3 12a9 9 0 0 1 15.364-6.364L21 8" />
-    <path d="M21 3v5h-5" />
-    <path d="M21 12a9 9 0 0 1-15.364 6.364L3 16" />
-    <path d="M3 21v-5h5" />
+  <g transform="translate(5.6 5.6) scale(2.2)">
+    <path
+      d="M11.5 2.5 L9.7 3.6 L5.5 2 L3.8 5.6 L2.6 8.8 L1.5 12.4 L3 16 L4.8 19 L8.6 20.5 L11.5 21.8 L14.4 20.5 L18.2 19 L20 16 L21.5 12.4 L20.4 8.8 L19.2 5.6 L17.5 2 L13.3 3.6 Z"
+      fill="#f5f6f8"
+      stroke="#040406"
+      stroke-width="1.1"
+      stroke-linejoin="round"
+    />
+    <circle cx="7" cy="11.4" r="3" fill="#040406" />
+    <circle cx="7.75" cy="10.6" r="0.95" fill="#f5f6f8" />
+    <circle cx="17" cy="11.4" r="3" fill="#040406" />
+    <circle cx="17.75" cy="10.6" r="0.95" fill="#f5f6f8" />
+    <path d="M4.8 9.6 L8.6 8.1" stroke="#040406" stroke-width="1" stroke-linecap="round" />
+    <path d="M19.2 9.6 L15.4 8.1" stroke="#040406" stroke-width="1" stroke-linecap="round" />
+    <path
+      d="M11.4 12.6 L13 13.8 L11.4 16 L9.8 13.8 Z"
+      fill="#bf5af2"
+      stroke="#040406"
+      stroke-width="0.9"
+      stroke-linejoin="round"
+    />
   </g>
 </svg>
