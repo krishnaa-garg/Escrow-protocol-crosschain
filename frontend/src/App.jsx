@@ -64,6 +64,15 @@ function short(addr) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+// Renders a raw useBalance result as a compact, human-friendly token value.
+function formatBalance(balance) {
+  if (!balance) return null;
+  const n = Number(balance.formatted);
+  if (!Number.isFinite(n)) return null;
+  const amount = n === 0 ? "0" : n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  return `${amount} ${balance.symbol}`;
+}
+
 function loadLedger() {
   try {
     const raw = localStorage.getItem(LEDGER_KEY);
@@ -118,7 +127,7 @@ function BrandMark() {
 }
 
 // Glassmorphic wallet button; keeps RainbowKit's connect modal + theming.
-function GlassConnectButton() {
+function GlassConnectButton({ balance }) {
   return (
     <ConnectButton.Custom>
       {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
@@ -155,6 +164,14 @@ function GlassConnectButton() {
                     <span className="inline-block h-2 w-2 rounded-full bg-signalGood shadow-glowGood" />
                     {chain.name}
                   </button>
+                  {balance && (
+                    <span
+                      className="glass-chip font-mono"
+                      aria-label={`${balance} on ${chain.name}`}
+                    >
+                      {balance}
+                    </span>
+                  )}
                   <button onClick={openAccountModal} className="glass-button-secondary py-2.5 text-xs">
                     {account.displayName}
                   </button>
@@ -409,6 +426,7 @@ export default function App() {
   // Faucet step only shows if the wallet has zero balance on the active chain.
   const { data: balanceData } = useBalance({ address: account, chainId });
   const hasZeroBalance = balanceData ? balanceData.value === 0n : false;
+  const walletBalance = formatBalance(balanceData);
   const walkthroughChainName =
     CHAINS.find((c) => c.id === chainId)?.name || `Chain #${chainId}`;
 
@@ -517,7 +535,7 @@ export default function App() {
                 </p>
               </div>
             </div>
-            <GlassConnectButton />
+            <GlassConnectButton balance={walletBalance} />
           </div>
         </header>
 
