@@ -1,0 +1,352 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════
+   DESIGN TOKEN LAYER — the single source of truth for every raw value
+   in the UI (colors, radii, blurs, shadows, durations).
+
+   Tailwind utilities declared in tailwind.config.js reference these
+   custom properties; component classes in @layer components reference
+   only tokens. Raw values never appear inside React components.
+
+   System: black-base Apple glassmorphism (Control Center / Notification
+   Center). Near-black canvas with a few heavily-blurred blue + purple
+   orbs floating behind frosted panels.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    /* ── Canvas · near-black base surface ────────────────────────── */
+    --st-canvas: 0 0 0;              /* #000000 */
+    --st-canvas-elevated: 6 6 10;    /* #06060a */
+    --st-canvas-sunken: 3 3 5;       /* #030305 */
+
+    /* ── Paper · text on the frosted glass ───────────────────────── */
+    --st-ink: 245 246 248;           /* #f5f6f8 primary   */
+    --st-ink-secondary: 176 185 197; /* #b0b9c5 secondary */
+    --st-ink-tertiary: 120 128 142;  /* #78808e   muted   */
+
+    /* ── Frosted glass fills · white alpha over near-black ───────── */
+    --st-glass-strong: rgba(255, 255, 255, 0.1);
+    --st-glass-soft: rgba(255, 255, 255, 0.055);
+    --st-glass-faint: rgba(255, 255, 255, 0.035);
+    --st-glass-hairline: rgba(255, 255, 255, 0.12);
+    --st-glass-hairline-strong: rgba(255, 255, 255, 0.22);
+
+    /* ── Primary action · the iOS “white pill” button ────────────── */
+    --st-cta-fill: rgba(245, 246, 248, 0.96);
+    --st-cta-ink: 4 4 6;
+
+    /* ── Accent halo · the only hue in the system, kept subtle ──── */
+    --st-accent-blue: 90 200 250;    /* #5ac8fa */
+    --st-accent-purple: 191 90 242;  /* #bf5af2 */
+
+    /* ── Semantic signals · status only, nothing decorative ──────── */
+    --st-good: 48 209 88;            /* #30d158 – confirmed / safe   */
+    --st-warn: 255 214 10;           /* #ffd60a – caution / refunded */
+    --st-bad: 255 69 58;             /* #ff453a – high risk          */
+    --st-info: 100 210 255;          /* #64d2ff · in-flight / info   */
+
+    /* ── Ambient background orbs ─────────────────────────────────── */
+    --st-orb-blur: 90px;
+    --st-orb-opacity: 0.2;
+    --st-orb-duration-a: 26s;
+    --st-orb-duration-b: 38s;
+    --st-orb-duration-c: 46s;
+
+    /* ── Geometry · generous rounded corners ─────────────────────── */
+    --st-radius-panel: 1.75rem;
+    --st-radius-card: 1.25rem;
+    --st-radius-control: 0.875rem;
+    --st-radius-pill: 9999px;
+
+    /* ── Frosted backdrop blur strengths ─────────────────────────── */
+    --st-blur-panel: 34px;
+    --st-blur-card: 24px;
+    --st-blur-control: 18px;
+    --st-blur-modal: 48px;
+
+    /* ── Elevation · floating + inner-top highlight ──────────────── */
+    --st-shadow-glass: 0 24px 70px -20px rgba(0,0,0,0.7), 0 8px 30px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.11);
+    --st-shadow-control: inset 0 1px 0 rgba(255,255,255,0.07);
+    --st-glow-blue: 0 0 28px -6px rgba(90,200,250,0.5);
+    --st-glow-purple: 0 0 28px -6px rgba(191,90,242,0.5);
+    --st-glow-good: 0 0 14px rgba(48,209,88,0.55);
+    --st-glow-warn: 0 0 14px rgba(255,214,10,0.55);
+    --st-glow-bad: 0 0 14px rgba(255,69,58,0.55);
+    --st-glow-info: 0 0 14px rgba(100,210,255,0.55);
+    --st-glow-unknown: 0 0 10px rgba(176,185,197,0.3);
+
+    /* ── Native <select> chevron (single raw data-uri lives here) ── */
+    --st-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23f5f6f8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--st-canvas));
+    background-image: radial-gradient(
+      130% 130% at 50% 0%,
+      rgb(var(--st-canvas-elevated)),
+      rgb(var(--st-canvas-sunken)) 65%
+    );
+    background-attachment: fixed;
+    color: rgb(var(--st-ink));
+    font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Native form controls rendered in OS menus follow the palette. */
+  option {
+    background-color: rgb(var(--st-canvas-elevated));
+    color: rgb(var(--st-ink));
+  }
+
+  ::selection {
+    background-color: rgb(var(--st-accent-blue) / 0.25);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--st-glass-hairline);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASS PRIMITIVES — named component classes composed only from the
+   design tokens above. Kept in @layer components so Tailwind utilities
+   (later in the cascade) can still override where needed.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Control-Center style frosted panel. */
+  .glass-panel {
+    @apply relative rounded-panel backdrop-blur-panel backdrop-saturate-150 shadow-glass;
+    background-color: var(--st-glass-strong);
+    border: 1px solid var(--st-glass-hairline);
+  }
+
+  /* Denser glass card (ledger rows). */
+  .glass-card {
+    @apply rounded-card backdrop-blur-card shadow-glass;
+    background-color: var(--st-glass-soft);
+    border: 1px solid var(--st-glass-hairline);
+  }
+
+  /* Inline info callout inside a panel. */
+  .glass-callout {
+    @apply flex items-start gap-3 rounded-card px-4 py-3;
+    background-color: var(--st-glass-faint);
+    border: 1px solid var(--st-glass-hairline);
+  }
+
+  /* Empty-state placeholder inside a panel. */
+  .glass-empty {
+    @apply flex flex-1 items-center justify-center rounded-card py-14;
+    border: 1px dashed var(--st-glass-hairline);
+  }
+
+  /* Floating toolbar / header capsule. */
+  .glass-toolbar {
+    @apply rounded-panel backdrop-blur-panel backdrop-saturate-150 shadow-glass;
+    background-color: var(--st-glass-soft);
+    border: 1px solid var(--st-glass-hairline);
+  }
+
+  /* Text input / control. */
+  .glass-control {
+    @apply w-full rounded-control px-4 py-3 font-mono text-sm outline-none backdrop-blur-control shadow-control;
+    background-color: var(--st-glass-faint);
+    color: rgb(var(--st-ink));
+    border: 1px solid var(--st-glass-hairline);
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .glass-control:hover {
+    border-color: var(--st-glass-hairline-strong);
+  }
+  .glass-control:focus {
+    border-color: rgb(var(--st-accent-blue) / 0.55);
+    box-shadow: 0 0 22px -8px rgb(var(--st-accent-blue) / 0.35);
+  }
+  .glass-control::placeholder {
+    color: rgb(var(--st-ink-tertiary) / 0.9);
+  }
+
+  /* Native <select> with a token-driven chevron. */
+  .glass-select {
+    appearance: none;
+    background-image: var(--st-chevron);
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 2.75rem;
+  }
+
+  /* Primary action button — the white iOS pill. */
+  .glass-button-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-control px-5 py-3 text-sm font-semibold shadow-glass transition hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+    background-color: var(--st-cta-fill);
+    color: rgb(var(--st-cta-ink));
+  }
+
+  /* Secondary / outlined button. */
+  .glass-button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-control px-5 py-3 text-sm font-medium shadow-control transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+    background-color: var(--st-glass-soft);
+    color: rgb(var(--st-ink-secondary));
+    border: 1px solid var(--st-glass-hairline);
+  }
+  .glass-button-secondary:hover {
+    color: rgb(var(--st-ink));
+    border-color: var(--st-glass-hairline-strong);
+  }
+
+  /* Quiet text button. */
+  .glass-button-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-control px-3 py-2 text-xs font-medium transition;
+    color: rgb(var(--st-ink-tertiary));
+  }
+  .glass-button-ghost:hover {
+    color: rgb(var(--st-ink));
+  }
+
+  /* Small status / tag pill. */
+  .glass-chip {
+    @apply inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[11px] font-medium backdrop-blur-control;
+    background-color: var(--st-glass-faint);
+    color: rgb(var(--st-ink-secondary));
+    border: 1px solid var(--st-glass-hairline);
+  }
+
+  /* Eyebrow label for panel titles. */
+  .eyebrow {
+    @apply font-display text-[11px] font-semibold uppercase tracking-[0.2em];
+    color: rgb(var(--st-ink-tertiary));
+  }
+
+  /* Form field label. */
+  .label {
+    @apply font-mono text-[11px] uppercase tracking-[0.14em];
+    color: rgb(var(--st-ink-tertiary));
+  }
+
+  /* Brand mark — the one place the gradient accent is fully visible. */
+  .brand-mark {
+    background-image: linear-gradient(
+      135deg,
+      rgb(var(--st-accent-blue) / 0.95),
+      rgb(var(--st-accent-purple) / 0.9)
+    );
+    box-shadow: 0 8px 24px -8px rgb(var(--st-accent-purple) / 0.55);
+    color: rgb(var(--st-cta-ink));
+  }
+}
+/* ═══════════════════════════════════════════════════════════════════
+   AMBIENT ORBS — large, heavily blurred radial glows that sit behind
+   the glass panels (what the glass appears to be frosting over). Kept
+   subtle on purpose: 90px blur, 20% opacity, slow drift.
+   ═══════════════════════════════════════════════════════════════════ */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(var(--st-orb-blur));
+  opacity: var(--st-orb-opacity);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.orb-a {
+  width: 34rem;
+  height: 34rem;
+  top: -10rem;
+  left: -8rem;
+  background: radial-gradient(circle at 35% 35%, rgb(var(--st-accent-blue) / 0.9), transparent 62%);
+  animation: orb-drift-a var(--st-orb-duration-a) ease-in-out infinite alternate;
+}
+
+.orb-b {
+  width: 38rem;
+  height: 38rem;
+  bottom: -14rem;
+  right: -10rem;
+  background: radial-gradient(circle at 60% 40%, rgb(var(--st-accent-purple) / 0.85), transparent 62%);
+  animation: orb-drift-b var(--st-orb-duration-b) ease-in-out infinite alternate-reverse;
+}
+
+.orb-c {
+  width: 26rem;
+  height: 26rem;
+  top: 32%;
+  left: 55%;
+  background: radial-gradient(circle at 50% 50%, rgb(var(--st-accent-blue) / 0.55), transparent 60%);
+  animation: orb-drift-c var(--st-orb-duration-c) ease-in-out infinite alternate;
+}
+
+@keyframes orb-drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(48px, -32px, 0) scale(1.08);
+  }
+}
+@keyframes orb-drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-40px, 28px, 0) scale(1.1);
+  }
+}
+@keyframes orb-drift-c {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-28px, -36px, 0) scale(1.05);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SIGNAL BEACON — the one recurring motif. Color + pulse carry meaning;
+   nothing decorative competes with it.
+   ═══════════════════════════════════════════════════════════════════ */
+@keyframes beacon-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 7px transparent;
+    opacity: 0.6;
+  }
+}
+.beacon-pulse {
+  animation: beacon-pulse 2s ease-out infinite;
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .beacon-pulse {
+    animation: none;
+  }
+}
