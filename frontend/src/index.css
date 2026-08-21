@@ -333,28 +333,49 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   BRAND MARK — endless horizontal-axis (X) spin, runs the whole
-   session. perspective() lives inside the transform so the owl flips
-   in 3D like a coin without needing a wrapper element.
+   BRAND MARK — a true 3D coin: two owl faces glued back-to-back in a
+   preserve-3d wrapper. While a transaction is in flight it spins on
+   its VERTICAL axis (rotateY) — front face first, back face second —
+   starting at send and stopping when the tx settles. Idle shows the
+   static front face.
    ═══════════════════════════════════════════════════════════════════ */
-@keyframes brand-flip {
+@keyframes brand-spin {
   from {
-    transform: perspective(600px) rotateX(0deg);
+    transform: perspective(520px) rotateY(0deg);
   }
   to {
-    transform: perspective(600px) rotateX(360deg);
+    transform: perspective(520px) rotateY(360deg);
   }
 }
-.brand-flip {
-  animation: brand-flip 3.5s linear infinite;
+.brand-mark-3d {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.brand-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+}
+.brand-face.brand-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+.brand-spin {
+  animation: brand-spin 1.6s linear infinite;
   will-change: transform;
+}
+/* Soft accent glow while transacting — reinforces "in flight". */
+.brand-spin .brand-face {
+  filter: drop-shadow(0 0 10px rgb(var(--st-accent-blue) / 0.45));
 }
 
 /* Respect users who prefer less motion. */
 @media (prefers-reduced-motion: reduce) {
   .orb,
   .beacon-pulse,
-  .brand-flip {
+  .brand-spin {
     animation: none;
   }
 }

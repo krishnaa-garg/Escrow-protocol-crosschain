@@ -101,56 +101,74 @@ function BackgroundOrbs() {
   );
 }
 
-function BrandMark() {
+/* The origami owl glyph — shared by both faces of the 3D coin. */
+function OwlGlyph() {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      {/* Origami owl — folded paper planes, no background, no frame. */}
+      {/* Head sheet */}
+      <path
+        d="M11.5 2.5 L9.7 3.6 L5.5 2 L3.8 5.6 L2.6 8.8 L1.5 12.4 L3 16 L4.8 19 L8.6 20.5 L11.5 21.8 L14.4 20.5 L18.2 19 L20 16 L21.5 12.4 L20.4 8.8 L19.2 5.6 L17.5 2 L13.3 3.6 Z"
+        fill="#eef2f8"
+        stroke="#040406"
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+      />
+      {/* Fold facets — temple ears */}
+      <path d="M5.5 2 L9.7 3.6 L3.8 5.6 Z" fill="#cdd7ea" />
+      <path d="M17.5 2 L13.3 3.6 L19.2 5.6 Z" fill="#cdd7ea" />
+      {/* Fold facets — lower cheeks */}
+      <path d="M1.5 12.4 L3 16 L4.8 19 L2.9 14.6 Z" fill="#e3e9f5" />
+      <path d="M21.5 12.4 L20 16 L18.2 19 L20.1 14.6 Z" fill="#e3e9f5" />
+      {/* Eyes — folded diamond facets */}
+      <path d="M3.9 11.4 L7 9.2 L10.1 11.4 L7 13.6 Z" fill="#0a0c12" />
+      <path d="M13.9 11.4 L17 9.2 L20.1 11.4 L17 13.6 Z" fill="#0a0c12" />
+      <circle cx="8.1" cy="10.5" r="0.65" fill="#eef2f8" />
+      <circle cx="18.1" cy="10.5" r="0.65" fill="#eef2f8" />
+      {/* Beak — folded diamond */}
+      <path
+        d="M11.4 12.6 L13 13.8 L11.4 16 L9.8 13.8 Z"
+        fill="#bf5af2"
+        stroke="#040406"
+        strokeWidth="0.8"
+        strokeLinejoin="round"
+      />
+      {/* Crease lines */}
+      <g stroke="#b7c3df" strokeWidth="0.8" strokeLinecap="round" opacity="0.9">
+        <path d="M12 3.4 L12 12.7" />
+        <path d="M5.9 8.7 L18.1 8.7" />
+        <path d="M6.7 8.8 L9.5 13.7" />
+        <path d="M17.3 8.8 L14.5 13.7" />
+        <path d="M7.4 4.7 L4 6.5" />
+        <path d="M16.6 4.7 L20 6.5" />
+      </g>
+    </svg>
+  );
+}
+
+// 3D brand mark — two owl faces glued back-to-back inside a preserve-3d
+// wrapper, so a spin reads as a solid coin instead of a flat decal. It
+// spins on its VERTICAL axis only while a transaction is in flight
+// (`spinning`): starts at send, stops when the tx settles.
+function BrandMark({ spinning = false }) {
   return (
     <span
       aria-hidden="true"
-      className="brand-flip inline-flex h-12 w-12 shrink-0 items-center justify-center"
+      className={`brand-mark-3d inline-flex h-14 w-14 shrink-0 items-center justify-center${
+        spinning ? " brand-spin" : ""
+      }`}
     >
-      <svg
-        width="26"
-        height="26"
-        viewBox="0 0 24 24"
-        fill="none"
-      >
-        {/* Origami owl — folded paper planes, no background, no frame. */}
-        {/* Head sheet */}
-        <path
-          d="M11.5 2.5 L9.7 3.6 L5.5 2 L3.8 5.6 L2.6 8.8 L1.5 12.4 L3 16 L4.8 19 L8.6 20.5 L11.5 21.8 L14.4 20.5 L18.2 19 L20 16 L21.5 12.4 L20.4 8.8 L19.2 5.6 L17.5 2 L13.3 3.6 Z"
-          fill="#eef2f8"
-          stroke="#040406"
-          strokeWidth="0.9"
-          strokeLinejoin="round"
-        />
-        {/* Fold facets — temple ears */}
-        <path d="M5.5 2 L9.7 3.6 L3.8 5.6 Z" fill="#cdd7ea" />
-        <path d="M17.5 2 L13.3 3.6 L19.2 5.6 Z" fill="#cdd7ea" />
-        {/* Fold facets — lower cheeks */}
-        <path d="M1.5 12.4 L3 16 L4.8 19 L2.9 14.6 Z" fill="#e3e9f5" />
-        <path d="M21.5 12.4 L20 16 L18.2 19 L20.1 14.6 Z" fill="#e3e9f5" />
-        {/* Eyes — folded diamond facets */}
-        <path d="M3.9 11.4 L7 9.2 L10.1 11.4 L7 13.6 Z" fill="#0a0c12" />
-        <path d="M13.9 11.4 L17 9.2 L20.1 11.4 L17 13.6 Z" fill="#0a0c12" />
-        <circle cx="8.1" cy="10.5" r="0.65" fill="#eef2f8" />
-        <circle cx="18.1" cy="10.5" r="0.65" fill="#eef2f8" />
-        {/* Beak — folded diamond */}
-        <path
-          d="M11.4 12.6 L13 13.8 L11.4 16 L9.8 13.8 Z"
-          fill="#bf5af2"
-          stroke="#040406"
-          strokeWidth="0.8"
-          strokeLinejoin="round"
-        />
-        {/* Crease lines */}
-        <g stroke="#b7c3df" strokeWidth="0.8" strokeLinecap="round" opacity="0.9">
-          <path d="M12 3.4 L12 12.7" />
-          <path d="M5.9 8.7 L18.1 8.7" />
-          <path d="M6.7 8.8 L9.5 13.7" />
-          <path d="M17.3 8.8 L14.5 13.7" />
-          <path d="M7.4 4.7 L4 6.5" />
-          <path d="M16.6 4.7 L20 6.5" />
-        </g>
-      </svg>
+      <span className="brand-face">
+        <OwlGlyph />
+      </span>
+      <span className="brand-face brand-back">
+        <OwlGlyph />
+      </span>
     </span>
   );
 }
@@ -431,6 +449,9 @@ export default function App() {
   const [check, setCheck] = useState(null); // { riskLevel, message } | null
   const [checking, setChecking] = useState(false);
   const [ledger, setLedger] = useState(loadLedger);
+  // True from the moment any send starts until it fully settles — this
+  // drives the 3D logo spin (transaction start -> transaction end).
+  const [txInFlight, setTxInFlight] = useState(false);
 
   // --- Onboarding: show the walkthrough exactly once, right after the first
   // wallet connection, unless onboarding_complete is already set. Uses a ref to
@@ -492,53 +513,63 @@ export default function App() {
   const canTransact = isConnected && isAddress(recipient) && Number(amount) > 0;
 
   async function handleSendDirect() {
-    await sendTransactionAsync({ to: recipient, value: parseEther(amount) });
+    setTxInFlight(true);
+    try {
+      await sendTransactionAsync({ to: recipient, value: parseEther(amount) });
+    } finally {
+      setTxInFlight(false);
+    }
   }
 
   async function handleSendViaEscrow() {
-    const txHash = await writeContractAsync({
-      address: escrowAddress,
-      abi: escrowAbi,
-      functionName: "lock",
-      args: [
-        BigInt(currentChain.id), // destinationChainId — same-chain demo; swap in real dest id if bridging
-        recipient,
-        "0x0000000000000000000000000000000000000000",
-        parseEther(amount),
-        BigInt(timeoutMinutes * 60),
-      ],
-      value: parseEther(amount),
-    });
+    setTxInFlight(true);
+    try {
+      const txHash = await writeContractAsync({
+        address: escrowAddress,
+        abi: escrowAbi,
+        functionName: "lock",
+        args: [
+          BigInt(currentChain.id), // destinationChainId — same-chain demo; swap in real dest id if bridging
+          recipient,
+          "0x0000000000000000000000000000000000000000",
+          parseEther(amount),
+          BigInt(timeoutMinutes * 60),
+        ],
+        value: parseEther(amount),
+      });
 
-    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-    let realTransferId = null;
-    for (const logEntry of receipt.logs) {
-      if (logEntry.address.toLowerCase() !== escrowAddress.toLowerCase()) continue;
-      try {
-        const decoded = decodeEventLog({
-          abi: escrowAbi,
-          data: logEntry.data,
-          topics: logEntry.topics,
-        });
-        if (decoded.eventName === "TransferLocked") {
-          realTransferId = Number(decoded.args.transferId);
-          break;
+      let realTransferId = null;
+      for (const logEntry of receipt.logs) {
+        if (logEntry.address.toLowerCase() !== escrowAddress.toLowerCase()) continue;
+        try {
+          const decoded = decodeEventLog({
+            abi: escrowAbi,
+            data: logEntry.data,
+            topics: logEntry.topics,
+          });
+          if (decoded.eventName === "TransferLocked") {
+            realTransferId = Number(decoded.args.transferId);
+            break;
+          }
+        } catch {
+          // Not the event we're looking for (or not decodable with this ABI) — skip.
         }
-      } catch {
-        // Not the event we're looking for (or not decodable with this ABI) — skip.
       }
-    }
 
-    if (realTransferId === null) {
-      console.error("Could not find TransferLocked event in receipt — ledger entry may be inaccurate.");
-      return;
-    }
+      if (realTransferId === null) {
+        console.error("Could not find TransferLocked event in receipt — ledger entry may be inaccurate.");
+        return;
+      }
 
-    setLedger((prev) => [
-      ...prev,
-      { transferId: realTransferId, recipient, amount, chainId: currentChain.id, txHash },
-    ]);
+      setLedger((prev) => [
+        ...prev,
+        { transferId: realTransferId, recipient, amount, chainId: currentChain.id, txHash },
+      ]);
+    } finally {
+      setTxInFlight(false);
+    }
   }
 
   return (
@@ -549,7 +580,7 @@ export default function App() {
         <header className="mx-auto w-full max-w-6xl px-4 pt-6 sm:px-6">
           <div className="glass-toolbar flex items-center justify-between gap-4 px-5 py-4 sm:px-6">
             <div className="flex items-center gap-3.5 min-w-0">
-              <BrandMark />
+              <BrandMark spinning={txInFlight} />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h1 className="font-display text-lg font-semibold tracking-tight text-ink">
