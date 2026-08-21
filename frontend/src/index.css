@@ -332,10 +332,29 @@
   animation: beacon-pulse 2s ease-out infinite;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   BRAND MARK — endless horizontal-axis (X) spin, runs the whole
+   session. perspective() lives inside the transform so the owl flips
+   in 3D like a coin without needing a wrapper element.
+   ═══════════════════════════════════════════════════════════════════ */
+@keyframes brand-flip {
+  from {
+    transform: perspective(600px) rotateX(0deg);
+  }
+  to {
+    transform: perspective(600px) rotateX(360deg);
+  }
+}
+.brand-flip {
+  animation: brand-flip 3.5s linear infinite;
+  will-change: transform;
+}
+
 /* Respect users who prefer less motion. */
 @media (prefers-reduced-motion: reduce) {
   .orb,
-  .beacon-pulse {
+  .beacon-pulse,
+  .brand-flip {
     animation: none;
   }
 }

@@ -105,11 +105,11 @@ function BrandMark() {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center"
+      className="brand-flip inline-flex h-12 w-12 shrink-0 items-center justify-center"
     >
       <svg
-        width="20"
-        height="20"
+        width="26"
+        height="26"
         viewBox="0 0 24 24"
         fill="none"
       >
