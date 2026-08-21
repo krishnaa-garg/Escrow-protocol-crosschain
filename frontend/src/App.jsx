@@ -102,64 +102,72 @@ function BackgroundOrbs() {
 }
 
 /* The origami owl glyph — shared by both faces of the 3D coin. */
+/* The origami owl glyph — shared by both faces of the 3D coin.
+   Low-poly folded-paper head: lit planes upper-left, shadow planes
+   right/underside, deep-set diamond eyes, two-tone folded beak. */
 function OwlGlyph() {
   return (
     <svg
-      width="32"
-      height="32"
+      width="38"
+      height="38"
       viewBox="0 0 24 24"
       fill="none"
     >
-      {/* Origami owl — folded paper planes, no background, no frame. */}
-      {/* Head sheet */}
+      {/* Base sheet — whole head silhouette in mid tone (fills facet seams) */}
       <path
-        d="M11.5 2.5 L9.7 3.6 L5.5 2 L3.8 5.6 L2.6 8.8 L1.5 12.4 L3 16 L4.8 19 L8.6 20.5 L11.5 21.8 L14.4 20.5 L18.2 19 L20 16 L21.5 12.4 L20.4 8.8 L19.2 5.6 L17.5 2 L13.3 3.6 Z"
-        fill="#eef2f8"
+        d="M12 1.6 L9.3 3.4 L5.2 1.2 L3.4 5.2 L2 10.6 L2.8 14.8 L4.6 18.2 L8.6 20.8 L12 21.8 L15.4 20.8 L19.4 18.2 L21.2 14.8 L22 10.6 L20.6 5.2 L18.8 1.2 L14.7 3.4 Z"
+        fill="#dbe3f2"
         stroke="#040406"
-        strokeWidth="0.9"
+        strokeWidth="0.85"
         strokeLinejoin="round"
       />
-      {/* Fold facets — temple ears */}
-      <path d="M5.5 2 L9.7 3.6 L3.8 5.6 Z" fill="#cdd7ea" />
-      <path d="M17.5 2 L13.3 3.6 L19.2 5.6 Z" fill="#cdd7ea" />
-      {/* Fold facets — lower cheeks */}
-      <path d="M1.5 12.4 L3 16 L4.8 19 L2.9 14.6 Z" fill="#e3e9f5" />
-      <path d="M21.5 12.4 L20 16 L18.2 19 L20.1 14.6 Z" fill="#e3e9f5" />
-      {/* Eyes — folded diamond facets */}
-      <path d="M3.9 11.4 L7 9.2 L10.1 11.4 L7 13.6 Z" fill="#0a0c12" />
-      <path d="M13.9 11.4 L17 9.2 L20.1 11.4 L17 13.6 Z" fill="#0a0c12" />
-      <circle cx="8.1" cy="10.5" r="0.65" fill="#eef2f8" />
-      <circle cx="18.1" cy="10.5" r="0.65" fill="#eef2f8" />
-      {/* Beak — folded diamond */}
+      {/* ── Lit planes (light source upper-left) ── */}
+      <path d="M12 1.6 L9.3 3.4 L12 7.4 Z" fill="#f9fbff" />
+      <path d="M9.3 3.4 L6.6 7.2 L9.8 9.4 L12 7.4 Z" fill="#f1f5fc" />
+      <path d="M6.6 7.2 L9.8 9.4 L10.4 13.2 L7.2 13.8 L4.8 11 Z" fill="#e9eef8" />
+      {/* ── Mid planes ── */}
+      <path d="M12 1.6 L14.7 3.4 L12 7.4 Z" fill="#e6ecf8" />
+      <path d="M14.7 3.4 L17.4 7.2 L14.2 9.4 L12 7.4 Z" fill="#dde5f3" />
+      <path d="M3.4 5.2 L6.6 7.2 L4.8 11 L2 10.6 Z" fill="#d0daec" />
+      {/* ── Shadow planes (right side + underside turn away from light) ── */}
+      <path d="M20.6 5.2 L22 10.6 L19.2 11 L17.4 7.2 Z" fill="#b9c5de" />
+      <path d="M22 10.6 L21.2 14.8 L19.4 18.2 L17 14.6 L19.2 11 Z" fill="#c2cde5" />
+      <path d="M2 10.6 L4.8 11 L6.8 14.6 L4.6 18.2 L2.8 14.8 Z" fill="#cbd6eb" />
+      {/* Ear tufts — folded back planes */}
+      <path d="M5.2 1.2 L3.4 5.2 L9.3 3.4 Z" fill="#c3cfe8" />
+      <path d="M18.8 1.2 L14.7 3.4 L20.6 5.2 Z" fill="#aebcdc" />
+      {/* Under-beak chin plane */}
+      <path d="M8.6 20.8 L12 21.8 L15.4 20.8 L12 16.8 Z" fill="#e4eaf6" />
+      {/* ── Eyes: socket shadows, folded diamond pupils, glints ── */}
+      <path d="M4.5 11.1 L7.2 9.1 L9.9 11.1 L7.2 13.1 Z" fill="#a9b7d6" opacity="0.6" />
+      <path d="M14.1 11.1 L16.8 9.1 L19.5 11.1 L16.8 13.1 Z" fill="#a9b7d6" opacity="0.6" />
+      <path d="M5.2 11.2 L7.2 9.7 L9.2 11.2 L7.2 12.7 Z" fill="#0a0c12" />
+      <path d="M14.8 11.2 L16.8 9.7 L18.8 11.2 L16.8 12.7 Z" fill="#0a0c12" />
+      <circle cx="8" cy="10.6" r="0.6" fill="#eef2f8" />
+      <circle cx="17.6" cy="10.6" r="0.6" fill="#eef2f8" />
+      {/* ── Beak: two-tone folded diamond (lit left, shadowed right) ── */}
+      <path d="M12 12.6 L12 16.4 L9.9 13.9 Z" fill="#b455ec" />
+      <path d="M12 12.6 L14.1 13.9 L12 16.4 Z" fill="#9840d9" />
       <path
-        d="M11.4 12.6 L13 13.8 L11.4 16 L9.8 13.8 Z"
-        fill="#bf5af2"
+        d="M12 12.6 L14.1 13.9 L12 16.4 L9.9 13.9 Z"
         stroke="#040406"
-        strokeWidth="0.8"
+        strokeWidth="0.7"
         strokeLinejoin="round"
+        fill="none"
       />
-      {/* Crease lines */}
-      <g stroke="#b7c3df" strokeWidth="0.8" strokeLinecap="round" opacity="0.9">
-        <path d="M12 3.4 L12 12.7" />
-        <path d="M5.9 8.7 L18.1 8.7" />
-        <path d="M6.7 8.8 L9.5 13.7" />
-        <path d="M17.3 8.8 L14.5 13.7" />
-        <path d="M7.4 4.7 L4 6.5" />
-        <path d="M16.6 4.7 L20 6.5" />
-      </g>
     </svg>
   );
 }
 
-// 3D brand mark — two owl faces glued back-to-back inside a preserve-3d
-// wrapper, so a spin reads as a solid coin instead of a flat decal. It
-// spins on its VERTICAL axis only while a transaction is in flight
+// 3D brand mark — two owl heads glued back-to-back inside a preserve-3d
+// wrapper, so a spin reads as a solid sculpture instead of a flat decal.
+// It spins on its VERTICAL axis only while a transaction is in flight
 // (`spinning`): starts at send, stops when the tx settles.
 function BrandMark({ spinning = false }) {
   return (
     <span
       aria-hidden="true"
-      className={`brand-mark-3d inline-flex h-14 w-14 shrink-0 items-center justify-center${
+      className={`brand-mark-3d inline-flex h-16 w-16 shrink-0 items-center justify-center${
         spinning ? " brand-spin" : ""
       }`}
     >
