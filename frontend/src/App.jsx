@@ -545,11 +545,6 @@ export default function App() {
             <section className="glass-panel p-6 sm:p-7 space-y-5 lg:col-span-2">
               <div>
                 <h2 className="eyebrow">Send</h2>
-                <p className="mt-2 text-xs leading-relaxed text-inkSecondary">
-                  Prevents wrong-network mistakes and protects transfers you route
-                  through escrow. It cannot recover funds already sent directly
-                  outside this system — that's a property of how blockchains work.
-                </p>
               </div>
 
               <div className="space-y-1.5">
