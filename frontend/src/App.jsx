@@ -105,7 +105,7 @@ function BrandMark() {
   return (
     <span
       aria-hidden="true"
-      className="brand-mark inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-card"
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center"
     >
       <svg
         width="20"
@@ -113,31 +113,43 @@ function BrandMark() {
         viewBox="0 0 24 24"
         fill="none"
       >
-        {/* Geometric "crypto owl" head — MetaMask-style angular faceting. */}
+        {/* Origami owl — folded paper planes, no background, no frame. */}
+        {/* Head sheet */}
         <path
           d="M11.5 2.5 L9.7 3.6 L5.5 2 L3.8 5.6 L2.6 8.8 L1.5 12.4 L3 16 L4.8 19 L8.6 20.5 L11.5 21.8 L14.4 20.5 L18.2 19 L20 16 L21.5 12.4 L20.4 8.8 L19.2 5.6 L17.5 2 L13.3 3.6 Z"
-          fill="#f5f6f8"
-          stroke="#040406"
-          strokeWidth="1.1"
-          strokeLinejoin="round"
-        />
-        {/* Left eye */}
-        <circle cx="7" cy="11.4" r="3" fill="#040406" />
-        <circle cx="7.75" cy="10.6" r="0.95" fill="#f5f6f8" />
-        {/* Right eye */}
-        <circle cx="17" cy="11.4" r="3" fill="#040406" />
-        <circle cx="17.75" cy="10.6" r="0.95" fill="#f5f6f8" />
-        {/* Angled brows — stern, MetaMask-style */}
-        <path d="M4.8 9.6 L8.6 8.1" stroke="#040406" strokeWidth="1" strokeLinecap="round" />
-        <path d="M19.2 9.6 L15.4 8.1" stroke="#040406" strokeWidth="1" strokeLinecap="round" />
-        {/* Beak */}
-        <path
-          d="M11.4 12.6 L13 13.8 L11.4 16 L9.8 13.8 Z"
-          fill="#bf5af2"
+          fill="#eef2f8"
           stroke="#040406"
           strokeWidth="0.9"
           strokeLinejoin="round"
         />
+        {/* Fold facets — temple ears */}
+        <path d="M5.5 2 L9.7 3.6 L3.8 5.6 Z" fill="#cdd7ea" />
+        <path d="M17.5 2 L13.3 3.6 L19.2 5.6 Z" fill="#cdd7ea" />
+        {/* Fold facets — lower cheeks */}
+        <path d="M1.5 12.4 L3 16 L4.8 19 L2.9 14.6 Z" fill="#e3e9f5" />
+        <path d="M21.5 12.4 L20 16 L18.2 19 L20.1 14.6 Z" fill="#e3e9f5" />
+        {/* Eyes — folded diamond facets */}
+        <path d="M3.9 11.4 L7 9.2 L10.1 11.4 L7 13.6 Z" fill="#0a0c12" />
+        <path d="M13.9 11.4 L17 9.2 L20.1 11.4 L17 13.6 Z" fill="#0a0c12" />
+        <circle cx="8.1" cy="10.5" r="0.65" fill="#eef2f8" />
+        <circle cx="18.1" cy="10.5" r="0.65" fill="#eef2f8" />
+        {/* Beak — folded diamond */}
+        <path
+          d="M11.4 12.6 L13 13.8 L11.4 16 L9.8 13.8 Z"
+          fill="#bf5af2"
+          stroke="#040406"
+          strokeWidth="0.8"
+          strokeLinejoin="round"
+        />
+        {/* Crease lines */}
+        <g stroke="#b7c3df" strokeWidth="0.8" strokeLinecap="round" opacity="0.9">
+          <path d="M12 3.4 L12 12.7" />
+          <path d="M5.9 8.7 L18.1 8.7" />
+          <path d="M6.7 8.8 L9.5 13.7" />
+          <path d="M17.3 8.8 L14.5 13.7" />
+          <path d="M7.4 4.7 L4 6.5" />
+          <path d="M16.6 4.7 L20 6.5" />
+        </g>
       </svg>
     </span>
   );

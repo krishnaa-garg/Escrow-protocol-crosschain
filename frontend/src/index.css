@@ -247,17 +247,6 @@
     @apply font-mono text-[11px] uppercase tracking-[0.14em];
     color: rgb(var(--st-ink-tertiary));
   }
-
-  /* Brand mark — the one place the gradient accent is fully visible. */
-  .brand-mark {
-    background-image: linear-gradient(
-      135deg,
-      rgb(var(--st-accent-blue) / 0.95),
-      rgb(var(--st-accent-purple) / 0.9)
-    );
-    box-shadow: 0 8px 24px -8px rgb(var(--st-accent-purple) / 0.55);
-    color: rgb(var(--st-cta-ink));
-  }
 }
 /* ═══════════════════════════════════════════════════════════════════
    AMBIENT ORBS — large, heavily blurred radial glows that sit behind
