@@ -11,7 +11,7 @@ import {
   usePublicClient,
   useBalance,
 } from "wagmi";
-import { parseEther, isAddress, decodeEventLog } from "viem";
+import { parseEther, formatEther, isAddress, decodeEventLog } from "viem";
 import { sepolia, baseSepolia, polygonAmoy } from "wagmi/chains";
 import { escrowAbi, escrowAddresses, preflightChainKey, STATUS_LABELS } from "./contracts.js";
 
@@ -267,8 +267,221 @@ function StatusRail({ statusIndex }) {
   );
 }
 
+// --- Ledger rows. Click a row to expand an on-chain receipt: where the money
+// went (sender -> escrow, escrow -> recipient/sender) with a link to each of
+// the two money-moving transactions on the chain's block explorer. Everything
+// is read straight from the chain through the wallet RPC, no explorer API. ---
+
+const REFUND_REASONS = {
+  "oracle-reported-failure": "Delivery was rejected on the destination chain",
+  "timeout-elapsed": "Timeout passed without a confirmation",
+};
+
+function explorerUrl(chain, kind, value) {
+  const base = chain.blockExplorers?.default?.url;
+  return base ? `${base}/${kind}/${value}` : null;
+}
+
+function formatTime(seconds) {
+  if (!seconds) return "—";
+  return new Date(Number(seconds) * 1000).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatEth(wei, digits = 6) {
+  if (wei === undefined || wei === null) return "—";
+  const n = Number(formatEther(wei));
+  return `${n === 0 ? "0" : n.toLocaleString("en-US", { maximumFractionDigits: digits })} ETH`;
+}
+
+// Finds the TransferConfirmed / TransferRefunded event for one transfer.
+// Searches forward from the lock block in chunks, shrinking the chunk if the
+// RPC rejects large ranges (public endpoints often cap eth_getLogs).
+async function findResolution(client, address, transferId, fromBlock) {
+  const [confirmedEvent, refundedEvent] = ["TransferConfirmed", "TransferRefunded"].map((name) =>
+    escrowAbi.find((item) => item.type === "event" && item.name === name)
+  );
+  const latest = await client.getBlockNumber();
+  let start = fromBlock;
+  let step = 5000n;
+  for (let calls = 0; start <= latest && calls < 80; calls++) {
+    const end = start + step - 1n > latest ? latest : start + step - 1n;
+    try {
+      const [confirmed, refunded] = await Promise.all([
+        client.getLogs({ address, event: confirmedEvent, args: { transferId }, fromBlock: start, toBlock: end }),
+        client.getLogs({ address, event: refundedEvent, args: { transferId }, fromBlock: start, toBlock: end }),
+      ]);
+      const log = confirmed[0] || refunded[0];
+      if (log) return log;
+      start = end + 1n;
+    } catch (err) {
+      if (step <= 10n) throw err;
+      step = step / 10n;
+    }
+  }
+  return null;
+}
+
+function TxLink({ href, hash }) {
+  if (!href) return <span className="font-mono text-inkTertiary">{short(hash)}</span>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1 font-mono text-signalInfo hover:underline whitespace-nowrap"
+    >
+      {short(hash)}
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+      </svg>
+    </a>
+  );
+}
+
+function FlowStep({ title, route, time, link, note, level, pulsing }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3 min-w-0">
+        <span className="mt-1.5"><Beacon level={level} pulsing={pulsing} size="sm" /></span>
+        <div className="min-w-0">
+          <div className="text-sm text-ink">{title}</div>
+          <div className="mt-0.5 font-mono text-xs text-inkSecondary truncate">{route}</div>
+          {note && <div className="mt-0.5 text-xs text-inkTertiary">{note}</div>}
+        </div>
+      </div>
+      <div className="shrink-0 text-right text-xs">
+        {link}
+        <div className="mt-0.5 text-inkTertiary">{time}</div>
+      </div>
+    </div>
+  );
+}
+
+function Detail({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <div className="label">{label}</div>
+      <div className="mt-1 font-mono text-xs text-ink truncate">{value}</div>
+    </div>
+  );
+}
+
+function TransferDetails({ entry, chain, onchain, status }) {
+  const address = escrowAddresses[chain.id];
+  const client = usePublicClient({ chainId: chain.id });
+  const [lock, setLock] = useState(null); // { blockNumber, fee }
+  const [resolution, setResolution] = useState(null); // { hash, time, refunded, reason }
+  const [error, setError] = useState("");
+
+  // The deposit (lock) transaction: block and gas fee.
+  useEffect(() => {
+    let cancelled = false;
+    if (!client || !entry.txHash) return;
+    client
+      .getTransactionReceipt({ hash: entry.txHash })
+      .then((r) => {
+        if (!cancelled) setLock({ blockNumber: r.blockNumber, fee: r.gasUsed * r.effectiveGasPrice });
+      })
+      .catch(() => !cancelled && setError("Couldn't load the deposit transaction from the network."));
+    return () => {
+      cancelled = true;
+    };
+  }, [client, entry.txHash]);
+
+  // The payout (release or refund) transaction, once the transfer is resolved.
+  useEffect(() => {
+    let cancelled = false;
+    if (!client || !address || !lock || status < 2 || resolution) return;
+    (async () => {
+      try {
+        const log = await findResolution(client, address, BigInt(entry.transferId), lock.blockNumber);
+        if (!log || cancelled) return;
+        const block = await client.getBlock({ blockNumber: log.blockNumber });
+        if (cancelled) return;
+        setResolution({
+          hash: log.transactionHash,
+          time: block.timestamp,
+          refunded: log.eventName === "TransferRefunded",
+          reason: log.args?.reason,
+        });
+      } catch {
+        if (!cancelled) setError("Couldn't find the payout transaction yet. Try again in a moment.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [client, address, lock, status, resolution, entry.transferId]);
+
+  const sender = onchain?.sender;
+  const recipient = onchain?.recipient || entry.recipient;
+  const createdAt = onchain?.createdAt;
+  const timeout = onchain?.timeoutSeconds;
+  const refundableAt = createdAt && timeout ? createdAt + timeout : null;
+
+  let payout;
+  if (status === 2 || status === 3) {
+    const refunded = status === 3;
+    payout = (
+      <FlowStep
+        level={refunded ? "warn" : "good"}
+        title={refunded ? "Refunded to sender" : "Released to recipient"}
+        route={`Escrow → ${short(refunded ? sender : recipient)}`}
+        note={refunded ? REFUND_REASONS[resolution?.reason] || resolution?.reason : null}
+        time={resolution ? formatTime(resolution.time) : "Looking up…"}
+        link={resolution ? <TxLink hash={resolution.hash} href={explorerUrl(chain, "tx", resolution.hash)} /> : null}
+      />
+    );
+  } else {
+    payout = (
+      <FlowStep
+        level="info"
+        pulsing
+        title="Waiting for the oracle"
+        route={`Escrow → ${short(recipient)}`}
+        note={refundableAt ? `If nothing happens, the sender can claim a refund after ${formatTime(refundableAt)}.` : null}
+        time=""
+        link={null}
+      />
+    );
+  }
+
+  return (
+    <div className="mt-4 border-t border-glassHairline pt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+      <div className="space-y-3">
+        <FlowStep
+          level="info"
+          title="Deposited into escrow"
+          route={`${short(sender) || "Sender"} → Escrow`}
+          time={formatTime(createdAt)}
+          link={entry.txHash ? <TxLink hash={entry.txHash} href={explorerUrl(chain, "tx", entry.txHash)} /> : null}
+        />
+        {payout}
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+        <Detail label="Amount" value={onchain ? formatEth(onchain.amount) : `${entry.amount} ETH`} />
+        <Detail label="Deposit gas fee" value={lock ? formatEth(lock.fee, 8) : "…"} />
+        <Detail label="Deposit block" value={lock ? lock.blockNumber.toLocaleString() : "…"} />
+        <Detail label="From" value={short(sender) || "…"} />
+        <Detail label="To" value={short(recipient)} />
+        <Detail label="Timeout" value={timeout ? `${Number(timeout) / 60} min` : "…"} />
+      </div>
+
+      {error && <p className="text-xs text-signalWarn">{error}</p>}
+    </div>
+  );
+}
+
 function TransferRow({ entry, chain }) {
   const address = escrowAddresses[chain.id];
+  const [open, setOpen] = useState(false);
   const { data: onchain } = useReadContract({
     address,
     abi: escrowAbi,
@@ -283,24 +496,42 @@ function TransferRow({ entry, chain }) {
   const level = status === 2 ? "good" : status === 3 ? "warn" : "info";
 
   return (
-    <div className="glass-card flex items-center justify-between gap-4 px-5 py-4">
-      <div className="flex items-center gap-3.5 min-w-0">
-        <Beacon level={level} pulsing={status === 1} />
-        <div className="min-w-0">
-          <div className="font-mono text-sm text-ink truncate">
-            #{entry.transferId} <span className="text-inkTertiary">→</span> {short(entry.recipient)}
-          </div>
-          <div className="mt-0.5 text-xs font-mono text-inkSecondary">
-            {entry.amount} ETH · {chain.name}
+    <div className="glass-card px-5 py-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 text-left"
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          <Beacon level={level} pulsing={status === 1} />
+          <div className="min-w-0">
+            <div className="font-mono text-sm text-ink truncate">
+              #{entry.transferId} <span className="text-inkTertiary">→</span> {short(entry.recipient)}
+            </div>
+            <div className="mt-0.5 text-xs font-mono text-inkSecondary">
+              {entry.amount} ETH · {chain.name}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex items-center gap-3 shrink-0">
-        <StatusRail statusIndex={status} />
-        <span className="w-20 text-right font-display text-[11px] font-medium uppercase tracking-[0.14em] text-inkSecondary">
-          {statusLabel}
-        </span>
-      </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <StatusRail statusIndex={status} />
+          <span className="w-20 text-right font-display text-[11px] font-medium uppercase tracking-[0.14em] text-inkSecondary">
+            {statusLabel}
+          </span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 text-inkTertiary transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+      {open && <TransferDetails entry={entry} chain={chain} onchain={onchain} status={status} />}
     </div>
   );
 }
