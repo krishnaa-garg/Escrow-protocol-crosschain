@@ -557,7 +557,7 @@ function DirectRow({ entry, chain }) {
 
   const failed = isError || receipt?.status === "reverted";
   const statusLabel = !receipt && !isError ? "Sending" : failed ? "Failed" : "Sent";
-  const level = failed ? "bad" : receipt ? "unknown" : "info";
+  const level = failed ? "bad" : receipt ? "good" : "info";
   const from = receipt?.from || entry.from;
 
   return (
@@ -580,7 +580,10 @@ function DirectRow({ entry, chain }) {
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <span className="glass-chip !px-2.5 !py-1 text-[10px] font-mono uppercase tracking-widest text-inkTertiary">
+          <span
+            title="Sent directly — no escrow protection"
+            className="rounded-full border border-signalWarn/40 bg-signalWarn/10 px-2.5 py-1 text-[10px] font-mono font-medium uppercase tracking-widest text-signalWarn"
+          >
             Direct
           </span>
           <span className="w-20 text-right font-display text-[11px] font-medium uppercase tracking-[0.14em] text-inkSecondary">
@@ -602,7 +605,7 @@ function DirectRow({ entry, chain }) {
       {open && (
         <div className="mt-4 border-t border-glassHairline pt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
           <FlowStep
-            level={failed ? "bad" : "unknown"}
+            level={failed ? "bad" : receipt ? "good" : "info"}
             pulsing={!receipt && !isError}
             title={failed ? "Direct send failed" : receipt ? "Sent directly" : "Waiting for the network"}
             route={`${short(from) || "Your wallet"} → ${short(entry.recipient)}`}
@@ -863,6 +866,12 @@ export default function App() {
         ...prev,
         { kind: "direct", txHash, recipient, amount, chainId: currentChain.id, from: account },
       ]);
+      // Keep the logo spinning until the transfer is actually mined, like escrow.
+      try {
+        await publicClient.waitForTransactionReceipt({ hash: txHash });
+      } catch {
+        // The ledger row reports a failure on its own; nothing else to do here.
+      }
     } finally {
       setTxInFlight(false);
     }
