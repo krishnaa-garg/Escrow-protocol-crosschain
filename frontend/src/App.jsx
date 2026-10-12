@@ -17,6 +17,13 @@ import { escrowAbi, escrowAddresses, preflightChainKey, STATUS_LABELS } from "./
 
 const CHAINS = [sepolia, baseSepolia, polygonAmoy];
 const PREFLIGHT_URL = import.meta.env.VITE_PREFLIGHT_URL || "http://localhost:4001";
+// The oracle has no API the UI depends on — this URL is only pinged so a
+// free-tier host (Render etc.) that went to sleep wakes up and processes locks.
+const ORACLE_URL = import.meta.env.VITE_ORACLE_URL || "";
+function wakeOracle() {
+  if (!ORACLE_URL) return;
+  fetch(`${ORACLE_URL.replace(/\/$/, "")}/health`).catch(() => {});
+}
 const LEDGER_KEY = "cross-chain-escrow-ledger";
 
 // --- Semantic signal palette. Only meaning, never decoration. -------
@@ -494,6 +501,10 @@ export default function App() {
 
   useEffect(() => saveLedger(ledger), [ledger]);
 
+  // Wake the oracle as soon as someone opens the app, so it's warm by the
+  // time they lock a transfer (free instances take ~1 min to start).
+  useEffect(() => wakeOracle(), []);
+
   const runPreflight = useCallback(async () => {
     if (!isAddress(recipient)) {
       setCheck(null);
@@ -547,6 +558,7 @@ export default function App() {
       });
 
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      wakeOracle(); // makes the oracle sweep for this lock right away
 
       let realTransferId = null;
       for (const logEntry of receipt.logs) {
