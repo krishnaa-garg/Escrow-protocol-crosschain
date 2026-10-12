@@ -535,6 +535,99 @@ function TransferRow({ entry, chain }) {
     </div>
   );
 }
+// --- Direct (non-escrow) sends in the ledger: a plain wallet transfer with
+// no lifecycle, so just pending -> sent/failed, plus a one-step receipt. ---
+function DirectRow({ entry, chain }) {
+  const [open, setOpen] = useState(false);
+  const client = usePublicClient({ chainId: chain.id });
+  const { data: receipt, isError } = useWaitForTransactionReceipt({ hash: entry.txHash, chainId: chain.id });
+  const [sentAt, setSentAt] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!open || !receipt || !client || sentAt) return;
+    client
+      .getBlock({ blockNumber: receipt.blockNumber })
+      .then((b) => !cancelled && setSentAt(b.timestamp))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, receipt, client, sentAt]);
+
+  const failed = isError || receipt?.status === "reverted";
+  const statusLabel = !receipt && !isError ? "Sending" : failed ? "Failed" : "Sent";
+  const level = failed ? "bad" : receipt ? "unknown" : "info";
+  const from = receipt?.from || entry.from;
+
+  return (
+    <div className="glass-card px-5 py-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 text-left"
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          <Beacon level={level} pulsing={!receipt && !isError} />
+          <div className="min-w-0">
+            <div className="font-mono text-sm text-ink truncate">
+              <span className="text-inkTertiary">→</span> {short(entry.recipient)}
+            </div>
+            <div className="mt-0.5 text-xs font-mono text-inkSecondary">
+              {entry.amount} ETH · {chain.name}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="glass-chip !px-2.5 !py-1 text-[10px] font-mono uppercase tracking-widest text-inkTertiary">
+            Direct
+          </span>
+          <span className="w-20 text-right font-display text-[11px] font-medium uppercase tracking-[0.14em] text-inkSecondary">
+            {statusLabel}
+          </span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 text-inkTertiary transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+
+      {open && (
+        <div className="mt-4 border-t border-glassHairline pt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <FlowStep
+            level={failed ? "bad" : "unknown"}
+            pulsing={!receipt && !isError}
+            title={failed ? "Direct send failed" : receipt ? "Sent directly" : "Waiting for the network"}
+            route={`${short(from) || "Your wallet"} → ${short(entry.recipient)}`}
+            note={
+              failed
+                ? "The transaction was rejected, so no funds moved."
+                : "No escrow protection. This can't be refunded."
+            }
+            time={sentAt ? formatTime(sentAt) : ""}
+            link={<TxLink hash={entry.txHash} href={explorerUrl(chain, "tx", entry.txHash)} />}
+          />
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+            <Detail label="Amount" value={`${entry.amount} ETH`} />
+            <Detail label="Gas fee" value={receipt ? formatEth(receipt.gasUsed * receipt.effectiveGasPrice, 8) : "…"} />
+            <Detail label="Block" value={receipt ? receipt.blockNumber.toLocaleString() : "…"} />
+            <Detail label="From" value={short(from) || "…"} />
+            <Detail label="To" value={short(entry.recipient)} />
+            <Detail label="Protection" value="None" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- One-time onboarding walkthrough: 4 dismissible slides shown after the
 // first successful wallet connection. Completion is tracked with a single
 // localStorage boolean, so it stays gone per browser — not per wallet address.
@@ -765,7 +858,11 @@ export default function App() {
   async function handleSendDirect() {
     setTxInFlight(true);
     try {
-      await sendTransactionAsync({ to: recipient, value: parseEther(amount) });
+      const txHash = await sendTransactionAsync({ to: recipient, value: parseEther(amount) });
+      setLedger((prev) => [
+        ...prev,
+        { kind: "direct", txHash, recipient, amount, chainId: currentChain.id, from: account },
+      ]);
     } finally {
       setTxInFlight(false);
     }
@@ -952,14 +1049,20 @@ export default function App() {
               <div className="flex items-center justify-between gap-2">
                 <h2 className="eyebrow">Transfer ledger</h2>
                 <span className="glass-chip">
-                  {ledger.length} escrow {ledger.length === 1 ? "transfer" : "transfers"}
+                  {(() => {
+                    const escrowCount = ledger.filter((e) => e.kind !== "direct").length;
+                    const plural = (n) => (n === 1 ? "transfer" : "transfers");
+                    return escrowCount === ledger.length
+                      ? `${escrowCount} escrow ${plural(escrowCount)}`
+                      : `${ledger.length} ${plural(ledger.length)} · ${escrowCount} escrow`;
+                  })()}
                 </span>
               </div>
 
               {ledger.length === 0 ? (
                 <div className="glass-empty">
                   <p className="text-xs text-inkTertiary text-center">
-                    Transfers routed through escrow will appear here, live.
+                    Your transfers will appear here, live.
                   </p>
                 </div>
               ) : (
@@ -967,13 +1070,14 @@ export default function App() {
                   {ledger
                     .slice()
                     .reverse()
-                    .map((entry) => (
-                      <TransferRow
-                        key={entry.transferId}
-                        entry={entry}
-                        chain={CHAINS.find((c) => c.id === entry.chainId) || currentChain}
-                      />
-                    ))}
+                    .map((entry) => {
+                      const chain = CHAINS.find((c) => c.id === entry.chainId) || currentChain;
+                      return entry.kind === "direct" ? (
+                        <DirectRow key={entry.txHash} entry={entry} chain={chain} />
+                      ) : (
+                        <TransferRow key={`escrow-${entry.transferId}`} entry={entry} chain={chain} />
+                      );
+                    })}
                 </div>
               )}
             </section>
