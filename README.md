@@ -114,15 +114,16 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `oracle/.env`:
+Fill in `oracle/.env` (see `oracle/.env.example` for all options):
 
 ```
-SOURCE_RPC_URL=wss://eth-sepolia.g.alchemy.com/v2/YOUR_KEY   # WSS, not HTTPS, for live events
+SOURCE_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY       # HTTPS is fine (wss:// also works)
 SOURCE_CHAIN_ID=11155111
-ESCROW_ADDRESS=0x...     # from the deploy step above
-ORACLE_PRIVATE_KEY=0x... # private key matching ORACLE_ADDRESS above
-CONFIRM_DELAY_MS=15000
-FAIL_TEST_RECIPIENT=0x000000000000000000000000000000000000dEaD
+ESCROW_ADDRESS=0x...       # Escrow, from the deploy step above
+DEST_RPC_URL=https://base-sepolia.g.alchemy.com/v2/YOUR_KEY
+DEST_CHAIN_ID=84532
+RECEIVER_ADDRESS=0x...     # Receiver, from deployReceiver.js on the destination chain
+ORACLE_PRIVATE_KEY=0x...   # matches ORACLE_ADDRESS above; needs test ETH on BOTH chains
 ```
 
 Run it:
@@ -131,8 +132,10 @@ Run it:
 npm start
 ```
 
-You should see `Watching Escrow at 0x... on wss://...` and then, after any `lock()`
-call, a line confirming or refunding it ~15 seconds later. This is your Phase 2
+You should see `Listening for new locks...` and then, after any `lock()` call, a line
+confirming or refunding it within ~15 seconds. Open `http://localhost:8080/health` to
+see its state — any `setupProblems` (no gas, wallet not trusted by Escrow/Receiver,
+wrong address) are listed there. This is your Phase 2
 checkpoint — the full backend loop working with no human in it.
 
 **Demoing the failure path:** any transfer locked with recipient
@@ -249,9 +252,11 @@ Before you go live:
 
 ## Troubleshooting
 
-- **Oracle never confirms:** check it's pointed at a `wss://` URL, not `https://` — the
-  event subscription needs a websocket. Also confirm `ORACLE_ADDRESS` used at deploy
-  time matches the wallet behind `ORACLE_PRIVATE_KEY`.
+- **Oracle never confirms:** open its `/health` URL and read `setupProblems`. The usual
+  causes are: the oracle wallet ran out of test ETH on one of the two chains, the
+  wallet behind `ORACLE_PRIVATE_KEY` isn't the one Escrow (`setOracle`) or Receiver
+  (`setRelayer`) trusts, or the service isn't running at all (it's not part of the
+  Vercel deploy — see "Deploying" below).
 - **Preflight always returns "unknown":** you're likely rate-limited or missing an API
   key for that chain's explorer — check the service's console logs, it prints the
   underlying fetch error.
@@ -262,6 +267,27 @@ Before you go live:
   `frontend/package.json` with `npm install <pkg>@<version>`.
 
 ---
+
+## Deploying (Vercel + Render free tier)
+
+Only `frontend/` runs on Vercel. `preflight/` and `oracle/` are separate Node services
+that must be hosted somewhere else, e.g. Render.
+
+| Piece | Where | Notes |
+|---|---|---|
+| `frontend/` | Vercel, root directory `frontend` | env vars: everything in `frontend/.env.example` |
+| `preflight/` | Render **Web Service**, root `preflight`, start `npm run dev` | put its URL in Vercel as `VITE_PREFLIGHT_URL` |
+| `oracle/` | Render **Web Service**, root `oracle`, build `npm install`, start `npm start` | env vars from `oracle/.env.example`; put its URL in Vercel as `VITE_ORACLE_URL` |
+
+The oracle is a background job, not an API — the frontend never calls it for data. It's
+deployed as a Web Service (not a Background Worker, which Render doesn't offer free)
+and exposes `/health` so the host sees an open port and so the frontend can wake it.
+Free web services sleep after ~15 min idle; the frontend pings `/health` on page load
+and after every lock, and on wake the oracle scans back over recent blocks so no lock
+is missed. Escrow's on-chain timeout refund still protects users if it's down.
+
+After changing any `VITE_*` variable in Vercel, **redeploy** — Vite bakes them in at
+build time.
 
 ## Team split (3–4 people)
 
